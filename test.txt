@@ -1,0 +1,7 @@
+Problog execution profiling: 0.0052s  |  Δmem = 1.3281 MB  |  curr_mem = 23.1719 MB
+Stage profiling:
+  Load model: 0.0003s | mem = 21.8594 MB
+  Prepare engine: 0.0015s | mem = 22.0469 MB
+  Semiring setup: 0.0000s | mem = 22.0469 MB
+  Knowledge compilation: 0.0029s | mem = 22.8750 MB
+  Evaluation: 0.0002s | mem = 23.1406 MB
