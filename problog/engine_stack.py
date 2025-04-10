@@ -118,10 +118,11 @@ class StackBasedEngine(ClauseDBEngine):
             exec_func = self.create_node_type(node_type)
 
             if exec_func is None:
-                if self.unknown == self.UNKNOWN_FAIL:
-                    return self.skip(node_id, **kwdargs)
-                else:
-                    raise UnknownClauseInternal()
+                return self.skip(node_id, **kwdargs)
+                # if self.unknown == self.UNKNOWN_FAIL:
+                #     return self.skip(node_id, **kwdargs)
+                # else:
+                #     raise UnknownClauseInternal()
 
         return exec_func(node_id=node_id, node=node, **kwdargs)
 
