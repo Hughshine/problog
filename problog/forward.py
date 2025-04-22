@@ -521,7 +521,7 @@ class _ForwardSDD(SDD, ForwardInference):
 
 class _ForwardBDD(BDD, ForwardInference):
     transform_preference = 1000
-
+    init_varcount = -1
     def __init__(self, **kwdargs):
         BDD.__init__(self, **kwdargs)
         ForwardInference.__init__(self, **kwdargs)
