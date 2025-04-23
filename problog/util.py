@@ -247,6 +247,8 @@ def kill_proc_tree(process, including_parent=True):
         # noinspection PyUnusedLocal
         psutil = None
         process.kill()
+    except psutil.NoSuchProcess:
+        pass
 
 
 class OrderedSet(collections.abc.MutableSet):
