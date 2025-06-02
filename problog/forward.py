@@ -28,7 +28,7 @@ import signal
 import time
 from collections import defaultdict
 
-from .bdd_formula import BDD
+from .bdd_formula import BDD, total_bdd_node_count, total_bdd_memory, stats, BDDManager
 from .core import transform
 from .core import transform_create_as
 from .dd_formula import DD
@@ -93,6 +93,7 @@ class ForwardInference(DD):
             OrderedSet
         )  # lookup all rules in which an atom is used
         self._completed = [False] * len(self)
+        self._iteration_count = 0  # for profiling purpose
 
         self._compute_node_depths()
         for index, node, nodetype in self:
@@ -234,6 +235,12 @@ class ForwardInference(DD):
     def _heuristic_key(self, node):
         return self._heuristic_key_depth(node)
 
+    def profile(self):
+        self._iteration_count += 1
+        if isinstance(self.get_manager(), BDDManager):
+            s = stats()
+            print(f"[Iteration {self._iteration_count}] BDD stats: {s}")
+    
     def build_iteration(self, updated_nodes):
         to_recompute = UHeap(key=self._heuristic_key)
         for node in updated_nodes:
@@ -242,6 +249,7 @@ class ForwardInference(DD):
 
         # nodes_to_recompute should be an updateable heap without duplicates
         while to_recompute:
+            self.profile()
             key, node = to_recompute.pop_with_key()
             if self.update_inode(node):  # The node has changed
                 # Find rules that may be affected

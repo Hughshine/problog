@@ -26,15 +26,33 @@ from .core import transform
 from .dd_formula import DD, build_dd, DDManager
 from .errors import InstallError
 from .formula import LogicDAG
+import sys
+import os
+import psutil
 
 # noinspection PyBroadException
 # noinspection PyUnresolvedReferences
 try:
     # noinspection PyPackageRequirements
     import pyeda.boolalg.bdd as bdd
-
+    def total_bdd_node_count():
+        return len(bdd._NODES)
+    def total_bdd_memory():
+        # total_bytes = sum(sys.getsizeof(n) for n in bdd._NODES.values())
+        # return total_bytes / (1024 * 1024)  # 转换为 MB
+        process = psutil.Process(os.getpid())
+        mem_bytes = process.memory_info().rss  # Resident Set Size
+        return mem_bytes / 1024 / 1024  # 转换为 MB
+    def stats():
+        return {
+            "nodes": len(bdd._NODES),
+            "total_memory_MB": total_bdd_memory(),
+            "node_count": total_bdd_node_count(),
+        }
     # noinspection PyPackageRequirements
     import pyeda.boolalg.expr as bdd_expr
+
+
 except Exception:
     bdd = None
 
