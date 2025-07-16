@@ -243,7 +243,7 @@ class SDDManager(DDManager):
             vtree = Vtree.new_with_X_constrained(
                 var_count=varcount, is_X_var=x_constraint, vtree_type="balanced"
             )
-        print("using vtree:", vtree)
+        # print("using vtree:", vtree)
         self.__manager = sdd.SddManager(
             var_count=varcount, auto_gc_and_minimize=auto_gc, vtree=vtree
         )

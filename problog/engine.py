@@ -333,7 +333,7 @@ class ClauseDBEngine(GenericEngine):
         else:
             negated = False
 
-        target, results = self._ground(db, term, target, silent_fail=False, **kwdargs)
+        target, results = self._ground(db, term, target, silent_fail=True, **kwdargs)
 
         args_node = defaultdict(list)
         for args, node_id in results:
