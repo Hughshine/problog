@@ -1,0 +1,421 @@
+.type s <: number
+.type BitSet <: number
+.type ind <: number
+
+.decl assign(v0: s, v1: s)
+.decl xor_assign_left(v0: s, v1: s)
+.decl xor_assign_right(v0: s, v1: s)
+.decl andor_assign_left(v0: s, v1: s)
+.decl andor_assign_right(v0: s, v1: s)
+.decl load_assign(v0: s, v1: s)
+.decl store_assign(v0: s, v1: s)
+.decl zext_assign(v0: s, v1: s)
+.decl trunc_assign(v0: s, v1: s)
+.decl BV_DIFF_REC(v0: s, v1: s, v2: BitSet)
+.decl BV_SAME_REC(v0: s, v1: s, v2: BitSet)
+.decl KEY_SENSITIVE(v0: s)
+.decl KEY_IND(v0: s)
+.decl CONSTANT(v0: s)
+.decl RAND(v0: s)
+
+KEY_IND(from1) :- CONSTANT(from1).
+KEY_IND(from2) :- (KEY_IND(from1), assign(from2, from1)).
+KEY_IND(to) :- (andor_assign_left(to, from1), andor_assign_right(to, from2), RAND(from1), RAND(from2), ((BV_DIFF_REC(from1, from2, int_res0), !((int_res0 = 0))); (BV_DIFF_REC(from2, from1, int_res1), !((int_res1 = 0))))).
+KEY_IND(to) :- (BV_SAME_REC(from1, from2, int_res0), andor_assign_left(to, from1), andor_assign_right(to, from2), RAND(from1), RAND(from2), ((BV_DIFF_REC(from1, from2, int_res0), (int_res0 = 0)), (BV_DIFF_REC(from2, from1, int_res1), (int_res1 = 0))), (int_res0 = 0)).
+KEY_IND(to) :- (BV_SAME_REC(from1, from2, int_res0), xor_assign_left(to, from1), xor_assign_right(to, from2), ((RAND(from1), BV_DIFF_REC(from1, from2, int_res0), (int_res0 = 0)), (RAND(from2), BV_DIFF_REC(from2, from1, int_res1), (int_res1 = 0))), (int_res0 = 0)).
+KEY_SENSITIVE(from2) :- (KEY_SENSITIVE(from1), assign(from2, from1)).
+KEY_SENSITIVE(to) :- (andor_assign_left(to, from1), andor_assign_right(to, from2), (KEY_SENSITIVE(from1); KEY_SENSITIVE(from2))).
+KEY_SENSITIVE(to) :- BV_SAME_REC(from1, from2, int_res0), (andor_assign_left(to, from1), andor_assign_right(to, from2), RAND(from1), RAND(from2), ((BV_DIFF_REC(from1, from2, int_res0), (int_res0 = 0)), (BV_DIFF_REC(from2, from1, int_res1), (int_res1 = 0))), !((int_res0 = 0))).
+KEY_SENSITIVE(to) :- (xor_assign_left(to, from1), xor_assign_right(to, from2), ((KEY_IND(from1), KEY_SENSITIVE(from2)); (KEY_IND(from2), KEY_SENSITIVE(from1)))).
+KEY_SENSITIVE(to) :- (BV_SAME_REC(from1, from2, int_res0), xor_assign_left(to, from1), xor_assign_right(to, from2), ((RAND(from1), BV_DIFF_REC(from1, from2, int_res0), (int_res0 = 0)), (RAND(from2), BV_DIFF_REC(from2, from1, int_res1), (int_res1 = 0))), !((int_res0 = 0))).
+KEY_SENSITIVE(to) :- (xor_assign_left(to, from1), xor_assign_right(to, from2), KEY_SENSITIVE(from1), KEY_SENSITIVE(from2)).
+RAND(from2) :- (RAND(from1), assign(from2, from1)).
+RAND(to) :- (xor_assign_left(to, from1), xor_assign_right(to, from2), ((RAND(from1), BV_DIFF_REC(from1, from2, int_res0), !((int_res0 = 0))); (RAND(from2), BV_DIFF_REC(from2, from1, int_res1), !((int_res1 = 0))))).
+assign(from1, from2) :- load_assign(from1, from2).
+assign(from1, from2) :- store_assign(from1, from2).
+assign(from1, from2) :- trunc_assign(from1, from2).
+assign(from1, from2) :- zext_assign(from1, from2).
+
+KEY_SENSITIVE(1).
+RAND(2).
+RAND(3).
+RAND(4).
+RAND(5).
+RAND(6).
+RAND(7).
+RAND(8).
+CONSTANT(9).
+load_assign(65, 1).
+zext_assign(66, 65).
+load_assign(67, 2).
+zext_assign(68, 67).
+xor_assign_left(69, 66).
+xor_assign_right(69, 68).
+BV_DIFF_REC(68, 66, 1).
+trunc_assign(70, 69).
+store_assign(49, 70).
+load_assign(72, 2).
+store_assign(50, 72).
+load_assign(113, 49).
+store_assign(51, 113).
+load_assign(115, 2).
+zext_assign(116, 115).
+load_assign(117, 4).
+zext_assign(118, 117).
+xor_assign_left(80, 116).
+xor_assign_right(80, 118).
+BV_DIFF_REC(116, 118, 1).
+trunc_assign(81, 80).
+store_assign(52, 81).
+load_assign(83, 3).
+zext_assign(84, 83).
+load_assign(85, 52).
+zext_assign(86, 85).
+xor_assign_left(87, 84).
+xor_assign_right(87, 86).
+BV_DIFF_REC(84, 86, 1).
+trunc_assign(88, 87).
+store_assign(53, 88).
+load_assign(129, 49).
+zext_assign(130, 129).
+load_assign(131, 4).
+zext_assign(132, 131).
+xor_assign_left(133, 130).
+xor_assign_right(133, 132).
+BV_DIFF_REC(130, 132, 1).
+trunc_assign(134, 133).
+store_assign(54, 134).
+load_assign(97, 53).
+zext_assign(98, 97).
+load_assign(99, 54).
+zext_assign(100, 99).
+xor_assign_left(101, 98).
+xor_assign_right(101, 100).
+BV_DIFF_REC(98, 100, 1).
+trunc_assign(102, 101).
+store_assign(16, 102).
+load_assign(104, 2).
+zext_assign(105, 104).
+load_assign(145, 4).
+zext_assign(146, 145).
+xor_assign_left(147, 105).
+xor_assign_right(147, 146).
+BV_DIFF_REC(105, 146, 1).
+trunc_assign(148, 147).
+store_assign(17, 148).
+load_assign(150, 17).
+zext_assign(112, 150).
+load_assign(113, 49).
+zext_assign(114, 113).
+xor_assign_left(115, 112).
+xor_assign_right(115, 114).
+BV_DIFF_REC(112, 114, 1).
+trunc_assign(116, 115).
+store_assign(18, 116).
+load_assign(118, 16).
+zext_assign(119, 118).
+load_assign(120, 18).
+zext_assign(121, 120).
+xor_assign_left(161, 119).
+xor_assign_right(161, 121).
+BV_DIFF_REC(119, 121, 1).
+trunc_assign(162, 161).
+store_assign(19, 162).
+load_assign(164, 4).
+store_assign(20, 164).
+load_assign(166, 19).
+zext_assign(128, 166).
+load_assign(129, 20).
+zext_assign(130, 129).
+xor_assign_left(131, 128).
+xor_assign_right(131, 130).
+BV_DIFF_REC(128, 130, 1).
+trunc_assign(132, 131).
+store_assign(21, 132).
+load_assign(134, 2).
+store_assign(22, 134).
+load_assign(136, 22).
+zext_assign(137, 136).
+load_assign(177, 3).
+zext_assign(178, 177).
+xor_assign_left(179, 137).
+xor_assign_right(179, 178).
+BV_DIFF_REC(137, 178, 1).
+trunc_assign(180, 179).
+store_assign(23, 180).
+load_assign(182, 49).
+store_assign(24, 182).
+load_assign(145, 24).
+zext_assign(146, 145).
+load_assign(147, 21).
+zext_assign(148, 147).
+xor_assign_left(149, 146).
+xor_assign_right(149, 148).
+BV_DIFF_REC(146, 148, 1).
+trunc_assign(150, 149).
+store_assign(25, 150).
+load_assign(152, 23).
+store_assign(65, 152).
+load_assign(193, 25).
+store_assign(66, 193).
+load_assign(195, 23).
+zext_assign(196, 195).
+load_assign(197, 6).
+zext_assign(198, 197).
+xor_assign_left(784, 196).
+xor_assign_right(784, 198).
+BV_DIFF_REC(196, 198, 1).
+trunc_assign(785, 784).
+store_assign(67, 785).
+load_assign(787, 5).
+zext_assign(788, 787).
+load_assign(789, 67).
+zext_assign(790, 789).
+xor_assign_left(791, 788).
+xor_assign_right(791, 790).
+BV_DIFF_REC(788, 790, 1).
+trunc_assign(792, 791).
+store_assign(68, 792).
+load_assign(833, 25).
+zext_assign(834, 833).
+load_assign(835, 6).
+zext_assign(836, 835).
+xor_assign_left(837, 834).
+xor_assign_right(837, 836).
+BV_DIFF_REC(834, 836, 1).
+trunc_assign(838, 837).
+store_assign(69, 838).
+load_assign(801, 68).
+zext_assign(802, 801).
+load_assign(803, 69).
+zext_assign(804, 803).
+xor_assign_left(805, 802).
+xor_assign_right(805, 804).
+BV_DIFF_REC(802, 804, 1).
+trunc_assign(806, 805).
+store_assign(70, 806).
+load_assign(808, 23).
+zext_assign(809, 808).
+load_assign(849, 6).
+zext_assign(850, 849).
+xor_assign_left(851, 809).
+xor_assign_right(851, 850).
+BV_DIFF_REC(809, 850, 1).
+trunc_assign(852, 851).
+store_assign(32, 852).
+load_assign(854, 32).
+zext_assign(816, 854).
+load_assign(817, 24).
+zext_assign(818, 817).
+xor_assign_left(819, 816).
+xor_assign_right(819, 818).
+BV_DIFF_REC(816, 818, 1).
+trunc_assign(820, 819).
+store_assign(33, 820).
+load_assign(822, 70).
+zext_assign(823, 822).
+load_assign(824, 33).
+zext_assign(825, 824).
+xor_assign_left(865, 823).
+xor_assign_right(865, 825).
+BV_DIFF_REC(823, 825, 1).
+trunc_assign(866, 865).
+store_assign(34, 866).
+load_assign(868, 6).
+store_assign(35, 868).
+load_assign(870, 34).
+zext_assign(832, 870).
+load_assign(833, 35).
+zext_assign(834, 833).
+xor_assign_left(835, 832).
+xor_assign_right(835, 834).
+BV_DIFF_REC(832, 834, 1).
+trunc_assign(836, 835).
+store_assign(36, 836).
+load_assign(838, 23).
+zext_assign(839, 838).
+load_assign(840, 5).
+zext_assign(841, 840).
+xor_assign_left(881, 839).
+xor_assign_right(881, 841).
+BV_DIFF_REC(839, 841, 1).
+trunc_assign(882, 881).
+store_assign(37, 882).
+load_assign(884, 25).
+zext_assign(885, 884).
+load_assign(886, 36).
+zext_assign(848, 886).
+xor_assign_left(849, 885).
+xor_assign_right(849, 848).
+BV_DIFF_REC(885, 848, 1).
+trunc_assign(850, 849).
+store_assign(38, 850).
+load_assign(852, 37).
+zext_assign(853, 852).
+load_assign(854, 65).
+zext_assign(855, 854).
+andor_assign_left(856, 853).
+andor_assign_right(856, 855).
+BV_DIFF_REC(853, 855, 1).
+trunc_assign(857, 856).
+store_assign(39, 857).
+load_assign(898, 38).
+zext_assign(899, 898).
+load_assign(900, 66).
+zext_assign(901, 900).
+andor_assign_left(902, 899).
+andor_assign_right(902, 901).
+BV_DIFF_REC(899, 901, 1).
+trunc_assign(864, 902).
+store_assign(40, 864).
+load_assign(866, 37).
+zext_assign(867, 866).
+load_assign(868, 66).
+zext_assign(869, 868).
+andor_assign_left(870, 867).
+andor_assign_right(870, 869).
+BV_DIFF_REC(867, 869, 1).
+trunc_assign(871, 870).
+store_assign(41, 871).
+load_assign(873, 7).
+zext_assign(913, 873).
+load_assign(914, 41).
+zext_assign(915, 914).
+xor_assign_left(916, 913).
+xor_assign_right(916, 915).
+BV_DIFF_REC(913, 915, 1).
+trunc_assign(917, 916).
+store_assign(81, 917).
+load_assign(256, 38).
+zext_assign(257, 256).
+load_assign(258, 65).
+zext_assign(259, 258).
+andor_assign_left(260, 257).
+andor_assign_right(260, 259).
+BV_DIFF_REC(257, 259, 1).
+trunc_assign(261, 260).
+store_assign(82, 261).
+load_assign(263, 81).
+zext_assign(264, 263).
+load_assign(265, 82).
+zext_assign(305, 265).
+xor_assign_left(306, 264).
+xor_assign_right(306, 305).
+BV_DIFF_REC(264, 305, 1).
+trunc_assign(307, 306).
+store_assign(83, 307).
+load_assign(309, 39).
+zext_assign(310, 309).
+load_assign(272, 7).
+zext_assign(273, 272).
+xor_assign_left(274, 310).
+xor_assign_right(274, 273).
+BV_DIFF_REC(273, 310, 1).
+trunc_assign(275, 274).
+store_assign(84, 275).
+load_assign(277, 40).
+zext_assign(278, 277).
+load_assign(279, 83).
+zext_assign(280, 279).
+xor_assign_left(281, 278).
+xor_assign_right(281, 280).
+BV_DIFF_REC(280, 278, 1).
+trunc_assign(321, 281).
+store_assign(85, 321).
+load_assign(323, 84).
+zext_assign(324, 323).
+load_assign(325, 50).
+zext_assign(326, 325).
+andor_assign_left(288, 324).
+andor_assign_right(288, 326).
+BV_DIFF_REC(324, 326, 1).
+trunc_assign(289, 288).
+store_assign(86, 289).
+load_assign(291, 85).
+zext_assign(292, 291).
+load_assign(293, 51).
+zext_assign(294, 293).
+andor_assign_left(295, 292).
+andor_assign_right(295, 294).
+BV_DIFF_REC(292, 294, 1).
+trunc_assign(296, 295).
+store_assign(48, 296).
+load_assign(337, 84).
+zext_assign(338, 337).
+load_assign(339, 51).
+zext_assign(340, 339).
+andor_assign_left(341, 338).
+andor_assign_right(341, 340).
+BV_DIFF_REC(338, 340, 1).
+trunc_assign(342, 341).
+store_assign(49, 342).
+load_assign(305, 8).
+zext_assign(306, 305).
+load_assign(307, 49).
+zext_assign(308, 307).
+xor_assign_left(309, 306).
+xor_assign_right(309, 308).
+BV_DIFF_REC(306, 308, 1).
+trunc_assign(310, 309).
+store_assign(50, 310).
+load_assign(312, 85).
+zext_assign(313, 312).
+load_assign(353, 50).
+zext_assign(354, 353).
+andor_assign_left(355, 313).
+andor_assign_right(355, 354).
+BV_DIFF_REC(313, 354, 1).
+trunc_assign(356, 355).
+store_assign(51, 356).
+load_assign(358, 50).
+zext_assign(320, 358).
+load_assign(321, 51).
+zext_assign(322, 321).
+xor_assign_left(323, 320).
+xor_assign_right(323, 322).
+BV_DIFF_REC(320, 322, 1).
+trunc_assign(324, 323).
+store_assign(52, 324).
+load_assign(326, 86).
+zext_assign(327, 326).
+load_assign(328, 8).
+zext_assign(329, 328).
+xor_assign_left(369, 327).
+xor_assign_right(369, 329).
+BV_DIFF_REC(329, 327, 1).
+trunc_assign(370, 369).
+store_assign(53, 370).
+load_assign(372, 48).
+zext_assign(373, 372).
+load_assign(374, 52).
+zext_assign(336, 374).
+xor_assign_left(337, 373).
+xor_assign_right(337, 336).
+BV_DIFF_REC(336, 373, 1).
+trunc_assign(338, 337).
+store_assign(54, 338).
+load_assign(340, 53).
+zext_assign(341, 340).
+load_assign(342, 9).
+zext_assign(343, 342).
+xor_assign_left(344, 341).
+xor_assign_right(344, 343).
+BV_DIFF_REC(341, 343, 1).
+trunc_assign(345, 344).
+store_assign(55, 345).
+load_assign(386, 55).
+zext_assign(387, 386).
+load_assign(388, 54).
+zext_assign(389, 388).
+xor_assign_left(390, 387).
+xor_assign_right(390, 389).
+BV_DIFF_REC(389, 387, 0).
+BV_DIFF_REC(387, 389, 0).
+BV_SAME_REC(387, 389, 1).
+trunc_assign(352, 390).
+
+// .output KEY_IND
+.output KEY_SENSITIVE
+// .output RAND
+// .output HD_SENSITIVE
+// .output HD_SENSITIVE_2
