@@ -32,6 +32,31 @@ import subprocess
 import sys
 import tempfile
 import time
+import json
+try:
+    import psutil
+except ImportError:
+    psutil = None
+
+try:
+    import resource
+
+    def get_memory():
+        # Returns memory usage in MB
+        return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024.0
+
+except ImportError:
+    try:
+        import psutil
+
+        def get_memory():
+            process = psutil.Process()
+            return process.memory_info().rss / (1024.0 * 1024.0)
+
+    except ImportError:
+
+        def get_memory():
+            return None
 
 
 class ProbLogLogFormatter(logging.Formatter):
@@ -84,34 +109,122 @@ def init_logger(verbose=None, name="problog", out=None):
 
 
 class Timer(object):
-    """Report timing information for a block of code.
-    To be used as a ``with`` block.
-
-    :param msg: message to print
-    :type msg: str
-    :param output: file object to write to (default: write to logger ``problog``)
-    :type output: file
+    """Report timing and memory information for a block of code or multiple phases.
+    Supports structured output and dumping to text or JSON.
+    Usage:
+        with Timer('phase_name', ...) as t:
+            ...
+        t.dump('output.txt')
     """
-
-    def __init__(self, msg, output=None, logger="problog"):
+    def __init__(self, msg=None, output=None, logger="problog"):
         self.message = msg
-        self.start_time = None
         self.output = output
         self.logger = logger
+        self.start_time = None
+        self.start_mem = None
+        self.end_time = None
+        self.end_mem = None
+        self.results = []  # List of dicts: {phase, time, memory}
+        self.current_phase = None
 
     def __enter__(self):
         self.start_time = time.time()
+        self.start_mem = self._get_mem()
+        self.current_phase = self.message
+        return self
 
-    # noinspection PyUnusedLocal
     def __exit__(self, *args):
-        if self.output is None:
-            logger = logging.getLogger(self.logger)
-            logger.info("%s: %.4fs" % (self.message, time.time() - self.start_time))
+        self.end_time = time.time()
+        self.end_mem = self._get_mem()
+        elapsed = self.end_time - self.start_time
+        mem_used = (self.end_mem - self.start_mem) if self.end_mem is not None and self.start_mem is not None else None
+        # Only record if phase name is not None
+        if self.current_phase is not None:
+            self.results.append({
+                'phase': self.current_phase,
+                'time': elapsed,
+                'memory': mem_used
+            })
+            msg = f"{self.current_phase}: {elapsed:.4f}s"
+            if mem_used is not None:
+                msg += f", {mem_used/1024/1024:.2f} MB"
+            if self.output is None:
+                logger = logging.getLogger(self.logger)
+                logger.info(msg)
+            else:
+                print(msg, file=self.output)
+        self.current_phase = None
+
+    def start_phase(self, phase):
+        self.start_time = time.time()
+        self.start_mem = self._get_mem()
+        self.current_phase = phase
+
+    def end_phase(self):
+        self.end_time = time.time()
+        self.end_mem = self._get_mem()
+        elapsed = self.end_time - self.start_time
+        mem_used = (self.end_mem - self.start_mem) if self.end_mem is not None and self.start_mem is not None else None
+        # Only record if phase name is not None
+        if self.current_phase is not None:
+            self.results.append({
+                'phase': self.current_phase,
+                'time': elapsed,
+                'memory': mem_used
+            })
+        self.current_phase = None
+
+    def _get_mem(self):
+        if psutil is not None:
+            process = psutil.Process(os.getpid())
+            return process.memory_info().rss
+        return None
+
+    def dump(self, filename, fmt=None):
+        """Dump profiling results to file. Format: 'json' or 'txt'.
+        If fmt is None, inferred from filename extension."""
+        # Compute total time and memory
+        total_time = sum(r['time'] for r in self.results)
+        total_mem_delta = sum((r['memory'] if r['memory'] is not None else 0) for r in self.results) / 1024 / 1024
+        end_mem = (self.results[-1]['memory'] if self.results and self.results[-1]['memory'] is not None else 0) / 1024 / 1024
+        # Build phases list
+        phases = []
+        mem_accum = 0
+        for r in self.results:
+            mem_mb = (r['memory'] if r['memory'] is not None else 0) / 1024 / 1024
+            mem_accum += mem_mb
+            phases.append({
+                'phase': r['phase'],
+                'time_s': r['time'],
+                'delta_mem_mb': mem_mb,
+                'end_mem_mb': mem_accum
+            })
+        profiling_data = {
+            'total': {
+                'time_s': total_time,
+                'delta_mem_mb': total_mem_delta,
+                'end_mem_mb': end_mem
+            },
+            'phases': phases,
+            'label': 'Problog execution profiling'
+        }
+        if fmt is None:
+            if filename.endswith('.json'):
+                fmt = 'json'
+            else:
+                fmt = 'txt'
+        if fmt == 'json':
+            with open(filename, 'w') as f:
+                json.dump(profiling_data, f, indent=2)
         else:
-            print(
-                "%s: %.4fs" % (self.message, time.time() - self.start_time),
-                file=self.output,
-            )
+            with open(filename, 'w') as f:
+                f.write(f"Total time: {profiling_data['total']['time_s']:.6f}s\n")
+                f.write(f"Total memory: {profiling_data['total']['end_mem_mb']:.2f} MB\n")
+                for phase in profiling_data['phases']:
+                    f.write(f"{phase['phase']}: {phase['time_s']:.6f}s, Δmem={phase['delta_mem_mb']:.2f}MB, end_mem={phase['end_mem_mb']:.2f}MB\n")
+
+    def get_results(self):
+        return self.results
 
 
 # noinspection PyUnusedLocal

@@ -20,6 +20,8 @@ import os
 import stat
 import sys
 import traceback
+import json
+import psutil
 
 from .. import get_evaluatable, get_evaluatables, library_paths
 from ..engine import DefaultEngine
@@ -35,6 +37,11 @@ from ..util import (
     format_value,
 )
 from ..version import version as problog_version
+
+
+def get_memory_mb():
+    process = psutil.Process(os.getpid())
+    return process.memory_info().rss / (1024 * 1024)
 
 
 def print_result(d, output, debug=False, precision=8):
@@ -98,60 +105,59 @@ def execute(
     combine=False,
     profile=False,
     trace=False,
+    timer=None,
     **kwdargs
 ):
-    """Run ProbLog.
-
-    :param filename: input file
-    :param knowledge: knowledge compilation class or identifier
-    :param semiring: semiring to use
-    :param parse_class: prolog parser to use
-    :param debug: enable advanced error output
-    :param engine_debug: enable engine debugging output
-    :param kwdargs: additional arguments
-    :return: tuple where first value indicates success, and second value contains result details
-    """
-
+    """Run ProbLog with detailed phase profiling."""
     try:
-        with Timer("Total time"):
-            if combine:
-                model = SimpleProgram()
-                for i, fn in enumerate(filename):
-                    filemodel = PrologFile(fn)
-                    for line in filemodel:
-                        model += line
-                    if i == 0:
-                        model.source_root = filemodel.source_root
-            else:
-                model = PrologFile(filename)
-            if profile or trace:
-                from problog.debug import EngineTracer
-
-                profiler = EngineTracer(keep_trace=trace)
-                kwdargs["debugger"] = profiler
-            else:
-                profiler = None
-
-            engine = DefaultEngine(**kwdargs)
-            db = engine.prepare(model)
-            db_semiring = db.get_data("semiring")
-            if db_semiring is not None:
-                semiring = db_semiring
-            if knowledge is None or type(knowledge) == str:
-                knowledge = get_evaluatable(knowledge, semiring=semiring)
-            formula = knowledge.create_from(db, engine=engine, database=db, **kwdargs)
-            result = formula.evaluate(semiring=semiring, **kwdargs)
-
-            # Update location information on result terms
-            for n, p in result.items():
-                if not n.location or not n.location[0]:
-                    # Only get location for primary file (other file information is not available).
-                    n.loc = model.lineno(n.location)
-            if profiler is not None:
-                if trace:
-                    print(profiler.show_trace())
-                if profile:
-                    print(profiler.show_profile(kwdargs.get("profile_level", 0)))
+        if timer is None:
+            timer = Timer()
+        if combine:
+            timer.start_phase("Load model")
+            model = SimpleProgram()
+            for i, fn in enumerate(filename):
+                filemodel = PrologFile(fn)
+                for line in filemodel:
+                    model += line
+                if i == 0:
+                    model.source_root = filemodel.source_root
+            timer.end_phase()
+        else:
+            timer.start_phase("Load model")
+            model = PrologFile(filename)
+            timer.end_phase()
+        if profile or trace:
+            from problog.debug import EngineTracer
+            profiler = EngineTracer(keep_trace=trace)
+            kwdargs["debugger"] = profiler
+        else:
+            profiler = None
+        timer.start_phase("Prepare engine")
+        engine = DefaultEngine(**kwdargs)
+        db = engine.prepare(model)
+        timer.end_phase()
+        timer.start_phase("Semiring setup")
+        db_semiring = db.get_data("semiring")
+        if db_semiring is not None:
+            semiring = db_semiring
+        timer.end_phase()
+        timer.start_phase("Knowledge compilation")
+        if knowledge is None or type(knowledge) == str:
+            knowledge = get_evaluatable(knowledge, semiring=semiring)
+        formula = knowledge.create_from(db, engine=engine, database=db, **kwdargs)
+        timer.end_phase()
+        timer.start_phase("Evaluation")
+        result = formula.evaluate(semiring=semiring, **kwdargs)
+        timer.end_phase()
+        # Update location information on result terms
+        for n, p in result.items():
+            if not n.location or not n.location[0]:
+                n.loc = model.lineno(n.location)
+        if profiler is not None:
+            if trace:
+                print(profiler.show_trace())
+            if profile:
+                print(profiler.show_profile(kwdargs.get("profile_level", 0)))
         return True, result
     except KeyboardInterrupt as err:
         trace = traceback.format_exc()
@@ -287,6 +293,11 @@ def argparser():
     parser.add_argument(
         "-L", "--library", action="append", help="Add to ProbLog library search path"
     )
+    parser.add_argument(
+        "--profiling-out",
+        help="Output profiling information to a file (json or txt format).",
+        type=str,
+    )
 
     # Additional arguments (passed through)
     parser.add_argument("--engine-debug", action="store_true", help=argparse.SUPPRESS)
@@ -395,11 +406,8 @@ def main(argv, result_handler=None):
     if len(args.filenames) == 0:
         mode = os.fstat(0).st_mode
         if stat.S_ISFIFO(mode) or stat.S_ISREG(mode):
-            # stdin is piped or redirected
             args.filenames = ["-"]
         else:
-            # stdin is terminal
-            # No interactive input, exit
             print("ERROR: Expected a file or stream as input.\n", file=sys.stderr)
             parser.print_help()
             sys.exit(1)
@@ -416,23 +424,30 @@ def main(argv, result_handler=None):
     if args.propagate_weights:
         args.propagate_weights = semiring
 
+    # --- Profiling logic ---
+    profiling_out = getattr(args, 'profiling_out', None)
+    timer = Timer()
     retcode = 0
     result = None
     if args.combine:
-        result = execute(args.filenames, args.koption, semiring, **vars(args))
+        timer.start_phase("Total execution")
+        result = execute(args.filenames, args.koption, semiring, timer=timer, **vars(args))
+        timer.end_phase()
         retcode = result_handler(result, output)
-        # sys.exit(retcode)
     else:
         for filename in args.filenames:
             if len(args.filenames) > 1:
                 print("Results for %s:" % filename)
-            result = execute(filename, args.koption, semiring, **vars(args))
+            timer.start_phase("Total execution")
+            result = execute(filename, args.koption, semiring, timer=timer, **vars(args))
+            timer.end_phase()
             retcode = result_handler(result, output)
-            # if len(args.filenames) == 1:
-            #     sys.exit(retcode)
 
     if args.output is not None:
         output.close()
+
+    if profiling_out:
+        timer.dump(profiling_out)
 
     if args.timeout:
         stop_timer()

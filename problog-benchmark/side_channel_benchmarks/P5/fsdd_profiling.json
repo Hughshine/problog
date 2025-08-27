@@ -1,33 +1,39 @@
 {
   "total": {
-    "time_s": 0.00978,
-    "delta_mem_mb": 1.390625,
-    "end_mem_mb": 22.484375
+    "time_s": 0.3973362445831299,
+    "delta_mem_mb": 8.25,
+    "end_mem_mb": 1.515625
   },
   "phases": [
     {
       "phase": "Load model",
-      "time_s": 0.000108,
+      "time_s": 0.00012183189392089844,
       "delta_mem_mb": 0.015625,
-      "end_mem_mb": 21.125
+      "end_mem_mb": 0.015625
     },
     {
       "phase": "Prepare engine",
-      "time_s": 0.007905,
-      "delta_mem_mb": 0.828125,
-      "end_mem_mb": 21.953125
+      "time_s": 0.008550167083740234,
+      "delta_mem_mb": 0.953125,
+      "end_mem_mb": 0.96875
     },
     {
       "phase": "Semiring setup",
-      "time_s": 4e-06,
+      "time_s": 1.0013580322265625e-05,
       "delta_mem_mb": 0.0,
-      "end_mem_mb": 21.96875
+      "end_mem_mb": 0.96875
     },
     {
       "phase": "Knowledge compilation",
-      "time_s": 0.001386,
-      "delta_mem_mb": 0.21875,
-      "end_mem_mb": 22.1875
+      "time_s": 0.38335704803466797,
+      "delta_mem_mb": 5.765625,
+      "end_mem_mb": 6.734375
+    },
+    {
+      "phase": "Evaluation",
+      "time_s": 0.005297183990478516,
+      "delta_mem_mb": 1.515625,
+      "end_mem_mb": 8.25
     }
   ],
   "label": "Problog execution profiling"
