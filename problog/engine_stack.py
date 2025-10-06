@@ -104,7 +104,13 @@ class StackBasedEngine(ClauseDBEngine):
         # print (kwdargs.get('parent'))
         database = kwdargs["database"]
 
-        # Skip not included or excluded nodes, or if parent is ignoring new results
+        # if node_id is fact, then directly evaluate itself
+        # if database.is_fact(node_id):
+        #     # print(database.get_node(node_id))
+        #     # return self.skip(node_id, **kwdargs)
+        #     return self.eval_fact(node_id=node_id, node=database.get_node(node_id), **kwdargs)
+        # print("2", database.get_node(node_id))
+        
         if self.should_skip_node(node_id, **kwdargs):
             return self.skip(node_id, **kwdargs)
 
@@ -129,6 +135,7 @@ class StackBasedEngine(ClauseDBEngine):
     def should_skip_node(self, node_id, **kwdargs):
         include_ids = kwdargs.get("include")
         exclude_ids = kwdargs.get("exclude")
+        # print(exclude_ids)
         # If we are only looking at certain 'included' ids, check if it is included
         # OR If we are excluding certain ids, check if it is in the excluded id list.
         # OR The parent node is ignoring new results, so there is no point in generating them.

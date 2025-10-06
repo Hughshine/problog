@@ -1742,6 +1742,8 @@ label_all=True)
                 destination.add_constraint(c)
 
         return destination
+    
+    
 
 
 class LogicDAG(LogicFormula):

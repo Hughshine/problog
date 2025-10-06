@@ -356,7 +356,6 @@ class ClauseDBEngine(GenericEngine):
                 target.add_name(-term, target.TRUE, label)
             else:
                 target.add_name(term, target.FALSE, label)
-
         return target
 
     def ground_step(
@@ -586,7 +585,54 @@ class ClauseDBEngine(GenericEngine):
             else:
                 self.ground_queries(db, target, queries)
                 self.ground_evidence(db, target, evidence)
-        return target
+
+        # return target
+        
+        # count the time
+        with Timer("Removing derivations of facts"):
+            # for all input facts, remove all of their derivations, except thier definition/atom
+            facts = {n.name for i, n, t in target if t == "atom"}
+
+            # print("facts:", facts)
+            to_be_removed = set()
+            for i, n, t in target:
+                # if is disj or conj and name is in facts
+                if t in ("disj", "conj") and n.name in facts:
+                    to_be_removed.add(i)
+
+            _target = LogicFormula()
+            _target._auto_compact = False
+            for i, n, t in target:
+                if t == "atom":
+                    j = _target.add_atom(
+                        n.identifier, n.probability, n.group, name=target.get_name(i)
+                    )
+                elif t == "conj":
+                    if n.name in facts:
+                        # j = _target.add_and([], name=n.name)
+                        assert False
+                    j = _target.add_and(n.children, name=n.name)
+                elif t == "disj":
+                    if n.name in facts:
+                        j = _target.add_or([n.children[0]], name=n.name)
+                        continue
+                    j = _target.add_or(n.children, name=n.name)
+                else:
+                    raise TypeError("Unknown node type")
+                assert i == j
+
+            # print(_target)
+            for name, node, label in target.get_names_with_label():
+                _target.add_name(name, node, label)
+                # if label == "query" or (node not in to_be_removed):
+                #     _target.add_name(name, node, label)
+                # else:
+                #     print("removing name:", name, node, label)
+
+            for c in target.constraints():
+                if c.is_nontrivial():
+                    _target.add_constraint(c)
+            return _target
 
     def add_external_calls(self, externals):
         self.__externals.update(externals)

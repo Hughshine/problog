@@ -596,6 +596,13 @@ class ClauseDB(LogicProgram):
             if term.probability is not None:
                 term = term.with_probability(self._create_vars(term.probability))
             return term
+        
+    def is_fact(self, node_id):
+        node = self.get_node(node_id)
+        if not node:
+            return False
+        nodetype = type(node).__name__
+        return nodetype == "fact"  # TODO: is this correct?
 
     def _extract(self, node_id):
         node = self.get_node(node_id)
