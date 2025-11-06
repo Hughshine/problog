@@ -18,6 +18,7 @@ limitations under the License.
 import random
 import unittest
 
+from problog.debug import EngineTracer
 from problog.engine import DefaultEngine
 from problog.logic import Term, Constant
 from problog.program import PrologString
@@ -227,6 +228,12 @@ class TestEngineCycles(unittest.TestCase):
                 self.edges, edges, msg="Test failed for random seed %s" % seed
             )
 
+def test_profile_equal_timing():
+    tracer = EngineTracer()
+    tracer.timestats[(Term('a'), 0)] = 0.000
+    tracer.timestats[(Term('b'), 1)] = 0.000
+    table = tracer.show_profile()
+
 
 def list_paths(source):
     names = dict(
@@ -265,3 +272,5 @@ def _list_paths(source, node_id, path):
             yield add
         else:  # Don't support negation for now
             raise Exception("Unexpected node type")
+
+

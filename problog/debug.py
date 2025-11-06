@@ -151,7 +151,7 @@ class EngineTracer(object):
                 "location",
             )
             s += "-" * 100 + "\n"
-            for tm, key in sorted((t, k) for k, t in self.timestats.items()):
+            for tm, key in sorted(((t, k) for k, t in self.timestats.items()), key=lambda t: t[0]):
                 term, location = key
                 nb = self.resultstats[key]
                 cl = self.callstats[key]

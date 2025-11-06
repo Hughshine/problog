@@ -161,7 +161,7 @@ def run_ground(model):
 
         handle, filename = tempfile.mkstemp(".dot")
         with open(filename, "w") as f:
-            f.write(formula.toDot())
+            f.write(formula.to_dot())
         print(formula)
         result = subprocess.check_output(["dot", "-Tsvg", filename]).decode("utf-8")
         content_type = "application/json"

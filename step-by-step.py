@@ -73,7 +73,7 @@ def main(filename, with_dot, knowledge):
 
     if dotprefix != None:
         with open(dotprefix + "gp.dot", "w") as f:
-            print(gp.toDot(), file=f)
+            print(gp.to_dot(), file=f)
 
     print("\n=== Acyclic Ground Program ===")
     with Timer("acyclic"):
@@ -82,7 +82,7 @@ def main(filename, with_dot, knowledge):
 
     if dotprefix != None:
         with open(dotprefix + "agp.dot", "w") as f:
-            print(gp.toDot(), file=f)
+            print(gp.to_dot(), file=f)
 
     if knowledge == "sdd":
         print("\n=== SDD compilation ===")
@@ -90,7 +90,8 @@ def main(filename, with_dot, knowledge):
             nnf = SDD.createFrom(gp)
 
         if dotprefix != None:
-            nnf.saveSDDToDot(dotprefix + "sdd.dot")
+            with open(dotprefix + "sdd.dot", "w") as f:
+                print(nnf.sdd_to_dot(None), file=f)
 
     else:
         print("\n=== Conversion to CNF ===")
@@ -103,7 +104,7 @@ def main(filename, with_dot, knowledge):
 
     if dotprefix != None:
         with open(dotprefix + "nnf.dot", "w") as f:
-            print(nnf.toDot(), file=f)
+            print(nnf.to_dot(), file=f)
 
     print("\n=== Evaluation result ===")
     with Timer("evaluate"):
