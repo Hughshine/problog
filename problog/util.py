@@ -151,9 +151,9 @@ class Timer(object):
             if self.output is None:
                 logger = logging.getLogger(self.logger)
                 logger.info(msg)
-                print(msg)
+                print(msg, flush=True)
             else:
-                print(msg, file=self.output)
+                print(msg, file=self.output, flush=True)
         self.current_phase = None
 
     def start_phase(self, phase):

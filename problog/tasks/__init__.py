@@ -43,6 +43,18 @@ problog_tasks["constraint"] = "problog.tasks.constraint"
 problog_default_task = "prob"
 
 
+def _as_exit_code(result):
+    if isinstance(result, int):
+        return result
+    if result is None:
+        return 0
+    if isinstance(result, tuple) and len(result) == 2 and isinstance(result[0], bool):
+        return 0 if result[0] else 1
+    if isinstance(result, bool):
+        return 0 if result else 1
+    return 0
+
+
 def run_task(argv):
     """Execute a task in ProbLog.
     If the first argument is a known task name, that task is executed.
@@ -101,9 +113,9 @@ def main(argv=None):
             print(version.version)
             return
         else:
-            return run_task(argv)
+            return _as_exit_code(run_task(argv))
     else:
-        return run_task(argv)
+        return _as_exit_code(run_task(argv))
 
 
 if __name__ == "__main__":
