@@ -31,3 +31,10 @@ web/logs
 *.out
 *.log
 problog/test/resulttable
+
+# Profiling outputs (keep existing samples tracked, ignore new generations)
+Plots/
+profiling.json
+profiling.txt
+/problog-benchmark/side_channel_benchmarks/**/*_profiling.json
+/problog-benchmark/side_channel_benchmarks/**/souffle_result.tmp*

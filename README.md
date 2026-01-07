@@ -1,6 +1,8 @@
 
 # ProbLog
 
+See `Update.md` for a summary of profiling-branch modifications and related profiling artifacts.
+
 ProbLog 2 is a **Probabilistic Logic Programming toolbox**.
 It allows to intuitively build programs that do **not only encode complex interactions** between a large sets of heterogenous components,
 but also the **inherent uncertainties** that are present in real-life situations.
